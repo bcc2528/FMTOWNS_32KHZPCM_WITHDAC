@@ -58,7 +58,6 @@ void main(void)
 	unsigned char *pcm_data;
 	unsigned int pcm_point;
 	int count;
-	char joyinp;
 
 	char para[64];
 
@@ -115,24 +114,37 @@ void main(void)
 	while(0 != (_inb(0x4d8) & 0x80));
 	_outb(0x4d8, 0x2a);
 
-	// Press the mouse button to EXIT (but heavy for 386 CPU TOWNS)
-	// while((((_inb(0x04d0)) & (_inp(0x04d2))) & 0x30) == 0x30)
 	while(1)
 	{
-		// Output DAC
-		while(0 != (_inb(0x4d8) & 0x80));
-		_outb(0x4da, pcm_data[pcm_point]);
-
-		pcm_point++;
-		// Loop
-		if(pcm_point >= PCM_SIZE )
+		if(count < 1)
 		{
-			pcm_point = 0;
-		}
+			// Output DAC
+			while(0 != (_inb(0x4d8) & 0x80));
+			_outb(0x4da, pcm_data[pcm_point]);
 
-		// for Wait
-		while(0 != (_inb(0x4d8) & 0x80));
-		_outb(0x4d8, 0x2a);
+			pcm_point++;
+			// Loop
+			if(pcm_point >= PCM_SIZE )
+			{
+				pcm_point = 0;
+			}
+
+			//// Press the mouse button to EXIT (but heavy for 386 TOWNS)
+			/*if( (((_inb(0x04d0)) & (_inb(0x04d2))) & 0x30) != 0x30)
+			{
+				break;
+			}*/
+
+			count++;
+		}
+		else
+		{
+			// for Wait
+			while(0 != (_inb(0x4d8) & 0x80));
+			_outb(0x4d8, 0x2a);
+
+			count = 0;
+		}
 	}
 
 	// Enable interrupt
