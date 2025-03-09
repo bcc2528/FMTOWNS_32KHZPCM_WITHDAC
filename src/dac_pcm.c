@@ -87,23 +87,27 @@ void main(void)
 	// like YM2612 DAC data is unsigned 8bit (-1.0=0x0, 0=0x7f ,+1.0=0xff).
 	FILE *fp;
 	fp = fopen("dac.pcm", "rb");
-	fseek(fp, 0, 0);
-	fread(pcm_data, sizeof(unsigned char), PCM_SIZE, fp);
-	fclose(fp);
-
-	// for debug
-	// Saw Wave 400Hz
-	/*unsigned char data;
-	pcm_point = 0;
-	for(int i = 0;i < 10000;i++)
+	if(fp == NULL)
 	{
-		data = 47;
-		for(int j = 0;j < 80; k++)
+		// Saw Wave 400Hz
+		unsigned char data;
+		pcm_point = 0;
+		for(int i = 0;i < 10000;i++)
 		{
-			pcm_data[pcm_point++] = data;
-			data += 2;
+			data = 47;
+			for(int j = 0;j < 80; j++)
+			{
+				pcm_data[pcm_point++] = data;
+				data += 2;
+			}
 		}
-	}*/
+	}
+	else
+	{
+		fseek(fp, 0, 0);
+		fread(pcm_data, sizeof(unsigned char), PCM_SIZE, fp);
+		fclose(fp);
+	}
 
 	// Disable interrupt
 	_disable();
