@@ -39,6 +39,9 @@ void initialize_TBIOS_and_DAC(void)
 
 	// Enable YM2612 DAC(FM 6ch OFF)
 	SND_fm_write_data(0, 0x2b, 0x80);
+
+	while(0 != (_inb(0x4d8) & 0x80));
+	_outb(0x4d8, 0x2a);
 }
 
 void end_TBIOS_and_DAC(void)
@@ -57,7 +60,6 @@ void main(void)
 {
 	unsigned char *pcm_data;
 	unsigned int pcm_point;
-	int count;
 
 	char para[64];
 
@@ -113,42 +115,31 @@ void main(void)
 	_disable();
 
 	pcm_point = 0;
-	count = 0;
-
-	while(0 != (_inb(0x4d8) & 0x80));
-	_outb(0x4d8, 0x2a);
 
 	while(1)
 	{
-		if(count < 1)
+		//1us wait register(but first, and 2nd generation FM TOWNS is not supported)
+		_outb(0x6c, 0);
+
+		//DAC output
+		_outb(0x4da, pcm_data[pcm_point]);
+
+		pcm_point++;
+		// Loop
+		if(pcm_point >= PCM_SIZE )
 		{
-			// Output DAC
-			while(0 != (_inb(0x4d8) & 0x80));
-			_outb(0x4da, pcm_data[pcm_point]);
-
-			pcm_point++;
-			// Loop
-			if(pcm_point >= PCM_SIZE )
-			{
-				pcm_point = 0;
-			}
-
-			//// Press the mouse button to EXIT (but heavy for 386 TOWNS)
-			/*if( (((_inb(0x04d0)) & (_inb(0x04d2))) & 0x30) != 0x30)
-			{
-				break;
-			}*/
-
-			count++;
+			pcm_point = 0;
 		}
-		else
+
+		//// Press the PAD A button to EXIT.
+		if( ((_inb(0x04d0)) & 0x30) != 0x30 )
 		{
-			// for Wait
-			while(0 != (_inb(0x4d8) & 0x80));
-			_outb(0x4d8, 0x2a);
-
-			count = 0;
+			break;
 		}
+
+		// YM2612 busy flag wait. look like busy flag updated 30us after write to only data register, 
+		// and no update when writing to the address register.
+		while(0 != (_inb(0x4d8) & 0x80));
 	}
 
 	// Enable interrupt
